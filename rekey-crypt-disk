@@ -1,0 +1,86 @@
+#!/usr/bin/bash
+cwdf=$(realpath $0)
+cwdd=$(dirname ${cwdf})
+
+AT=${cwdd}
+. $AT/constants
+
+f_print_help () {
+   f_pt 'Rekey Crypt Disk Tool'
+   printf '
+   Example usage -
+   '${YELLOW}''$0' sdb'${NORMAL}'
+
+   We will rekey with the strongest settings.
+   We do not care about speed.
+
+'
+}
+
+
+me=$(whoami)
+if [ ! "$me" == 'root' ]
+then
+   f_perr 'Only root can use the rekey tool.'
+   exit 1
+fi
+
+if [ "$1" == '--help' ]
+then
+   f_print_help
+   exit 0
+fi
+
+O_DEV=$1
+d=/dev/$O_DEV
+if [ ! -b $d ] || [ "$O_DEV" == '' ]
+then
+   f_print_help
+   f_perr 'You must specify a block device/partition path.'
+   ls /dev/sd*
+   echo 'Example - '$0' sdb'
+   exit 1
+fi
+O_LABEL=$2
+
+rnd_entrop=$(cat /proc/sys/kernel/random/entropy_avail)
+if [ $rnd_entrop -ge 100 ]
+then
+   f_pok 'This system has enough random entropy of '$rnd_entrop
+else
+   f_perr 'This system does not have enough random entropy for creating a secure crypt disk.'
+   f_perr 'It is less than 100'
+   exit 1
+fi
+
+E='sudo -r sysadm_r'
+if [ "$me" == 'root' ]; then E=''; fi
+which smartctl > /dev/null
+if [ $? -eq 1 ]
+then
+   ${E} apt install smartmontools
+fi
+
+choice=''
+while [ ! "$choice" == 'C' ]
+do
+   $E smartctl --info $d
+   $E smartctl --health $d | grep "overall-health"
+   $E lsblk --output "NAME,SIZE,FSTYPE,MOUNTPOINT,LABEL" $d
+   $E udisksctl status | grep $O_DEV
+   read -p '(C)ontinue, or (Q)uit: ' choice
+   choice=$(echo $choice | tr a-z A-Z)
+   if [ "$choice" == 'Q' ]; then exit 0; fi
+done
+$E cryptsetup luksChangeKey $d
+if [ ! $? -eq 0 ]; then exit $?; fi
+$E sync
+sleep 1
+f_pok 'crypt disk rekeyed'
+$E cryptsetup luksDump $d
+$E sync
+sleep 1
+f_pdone 'Disk '$d' has been rekeyed with the strongest settings.'
+
+
+

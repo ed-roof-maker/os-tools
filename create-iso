@@ -1,0 +1,90 @@
+#!/usr/bin/bash
+FOLDER_P=$1
+FOR_OPTICAL=$2
+
+CMD_GENISO='genisoimage -allow-limited-size -udf -iso-level 4 -J -joliet-long -volid '
+CMD_DVDISASTER='dvdisaster --image="{ISO_P}" --method=RS02 --redundancy=20% --create'
+CMD_DVDISASTER_AUTO='dvdisaster --image="{ISO_P}" --method=RS03 --create'
+CMD_DVDISASTER_TEST='dvdisaster --test --image="{ISO_P}"'
+
+print_help () {
+   printf '
+   Help for '$0'
+   
+   Example Usage: -
+      '$0' <folder> --optical       # For burning to CD/DVD
+      '$0' <folder>                 # For file image mounting
+
+'
+   exit 0
+}
+if [ "$1" == '--help' ]
+then
+   print_help
+   exit 0
+fi
+if [ ! -d ${FOLDER_P} ] || [ "${FOLDER_P}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'CreateISO was called with an incorrect folder path - '${FOLDER_P}
+   exit 1
+fi
+
+if [ ! -f /usr/bin/genisoimage ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'This user session does not have access to genisoimage.'
+   exit 1
+fi
+if [ ! -f /usr/bin/dvdisaster ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'This user session does not have access to dvdisaster.'
+   exit 1
+fi
+
+notify-send -t 0 --icon=dialog-information 'Create ISO - Starting' 'CreateISO is generating an image...\n'${FOLDER_P}
+
+IFS='/' read -ra arr <<< ${FOLDER_P}
+FOLDER_N=${arr[-1]}
+
+SRC_P=$(realpath ${FOLDER_P})
+ISO_N=${FOLDER_N}'.iso'
+cd ${SRC_P}/../
+${CMD_GENISO} ${FOLDER_N} -o ${ISO_N} ${SRC_P}
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'genisoimage was unable to generate an image without error.\n'${FOLDER_P}
+   exit 1
+fi
+
+sync
+sleep 5
+CMD_ECC=
+if [ "${FOR_OPTICAL}" == '--optical' ]
+then
+   CMD_ECC=${CMD_DVDISASTER_AUTO}
+else
+   CMD_ECC=${CMD_DVDISASTER}
+fi
+CMD_ECC=$(echo ${CMD_ECC} | sed 's|{ISO_P}|'${ISO_N}'|g')
+bash -c "${CMD_ECC}"
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'dvdisaster was unable to augement with error correction codes without error.\n'${FOLDER_P}
+   exit 1
+fi
+
+
+
+sleep 2
+CMD_ECC=$(echo ${CMD_DVDISASTER_TEST} | sed 's|{ISO_P}|'${ISO_N}'|g')
+bash -c "${CMD_ECC}"
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'dvdisaster iso ecc test failed. Please run dvdisaster GUI/terminal to see detailed results.\n'${FOLDER_PATH}
+   exit 1
+fi
+
+
+
+notify-send -t 0 --icon=emblem-default 'Create ISO - Completed' 'CreateISO created an ISO image with ECC correction data.\n'${FOLDER_P}
+
+
