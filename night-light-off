@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+AT=${cwdd}
+. ${AT}/constants
+echo '- Reconfiguring display settings...'
+current=$(xrandr --current | grep ' connected ' | cut -d ' ' -f 1)
+xrandr --output ${current} --gamma 1:1:1 --brightness 1
+f_pdone 'Display settings set to normal.'
+

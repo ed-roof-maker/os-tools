@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+AT=${cwdd}
+. ${AT}/constants
+R=$1
+if [ "$R" == '' ]; then R=1; fi
+echo '- Reconfiguring display settings...'
+current=$(xrandr --current | grep ' connected ' | cut -d ' ' -f 1)
+xrandr --output ${current} --gamma ${R}:0.5:0.3 --brightness 1
+f_pdone 'Display settings set to night light yellow.'
+
