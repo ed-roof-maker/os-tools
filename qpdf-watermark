@@ -1,0 +1,25 @@
+#!/usr/bin/bash
+O_FILE=$1
+if [ "${O_FILE}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error - Create Watermark' 'You must specify a valid pdf file.'
+   exit 1
+fi
+notify-send -t 0 --icon=dialog-information 'QPDF - Create Watermark - Select the pdf file you want to use as the background watermark.' ${outf}
+wm_filep=$(zenity --file-selection --title='QPDF - Create Watermark - Select Your Watermark PDF File...'${O_FILE})
+if [ "${wm_filep}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error - Create Watermark' 'Could not select a watermark file.'
+   exit 1
+fi
+suffix='Watermark'
+inf=${O_FILE}
+outf=${O_FILE[@]::-4}-${suffix}'.pdf'
+notify-send -t 0 --icon=dialog-information 'QPDF - Create Watermark - Starting' ${outf}
+qpdf --underlay ${wm_filep} --from=1 --repeat=1-z -- ${O_FILE} ${outf}
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error - Create Watermark' 'QPDF tool failed to watermark the file as \n'${outf}
+   exit 1
+fi
+notify-send -t 0 --icon=emblem-default 'QPDF - Create Watermark - Completed' 'QPDF generated a new file with a watermark here\n'${outf}

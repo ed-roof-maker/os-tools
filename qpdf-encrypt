@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+O_FILE=$1
+O_BEST=$2
+O_NOPRINT=$3
+if [ "${O_FILE}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error - Encrypt With AES' 'You must specify a valid pdf file.'
+   exit 1
+fi
+pass=$(zenity --password --window-icon=question --title='QPDF - Encrypt PDF file '${O_FILE})
+if [ "${pass}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error - Encrypt With AES' 'Could not get user password for pdf encryption.'
+   exit 1
+fi
+cipher='256'
+suffix=aes256-pdf20
+if [ "${O_BEST}" == '--old' ]
+then
+   suffix=aes128-pdf16
+   cipher='128 --use-aes=y'
+fi
+inf=${O_FILE}
+outf=${O_FILE[@]::-4}-${suffix}'.pdf'
+notify-send -t 0 --icon=dialog-information 'QPDF - Encrypt With AES - Starting' 'Config - '${cipher}'\nGenerating new pdf file...\n'${outf}
+qpdf --encrypt ${pass} ${pass} ${cipher} -- ${inf} ${outf}
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error - Encrypt With AES' 'QPDF tool failed to encrypt pdf file. Maybe try using the qpdf command line...\n'${outf}
+   exit 1
+fi
+notify-send -t 0 --icon=emblem-default 'QPDF - Encrypt With AES - Completed' 'QPDF generated a new pdf file here -\n'${outf}

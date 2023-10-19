@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+O_FILES=$@
+F1=$1
+if [ "${O_FILES}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error With Merge Pages' 'You must specify valid pdf files.'
+   exit 1
+fi
+outf=${F1[@]::-4}-Merged.pdf
+notify-send -t 0 --icon=dialog-information 'QPDF - Merge Pages - Starting' 'Generating new pdf file...\n'${outf}
+cmd='qpdf --pages '
+for f in ${O_FILES[@]}
+do
+   cmd=${cmd}' '${f}
+done
+cmd=${cmd}' -- --empty '${outf}
+${cmd}
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error With Merge Pages' 'QPDF tool failed to generate a new pdf. Maybe try using the qpdf command line...\n'${outf}
+   exit 1
+fi
+notify-send -t 0 --icon=emblem-default 'QPDF - Merge Pages - Completed' 'QPDF generated a new pdf file here -\n'${outf}

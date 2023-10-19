@@ -77,7 +77,7 @@ do
    choice=$(echo ${choice} | tr a-z A-Z)
    if [ "${choice}" == 'Q' ]; then exit 0; fi
 done
-${E} cryptsetup --use-random --type=luks2 --key-size=512 --cipher=twofish-xts-essiv:sha256 --pbkdf=argon2id --label="$O_LABEL" luksFormat ${d}
+${E} cryptsetup --use-random --type=luks2 --key-size=512 --cipher=twofish-xts-essiv:sha256 --pbkdf=argon2id --label="${O_LABEL}" luksFormat ${d}
 if [ ! $? -eq 0 ]; then exit $?; fi
 ${E} sync
 sleep 1
@@ -86,7 +86,7 @@ ${E} cryptsetup luksOpen ${d} ${O_DEV}"_crypt"
 ${E} sync
 sleep 1
 f_pok 'crypt disk mounted'
-${E} mkfs -t ext4 -L "$O_LABEL" /dev/mapper/${O_DEV}"_crypt"
+${E} mkfs -t ext4 -L "${O_LABEL}" /dev/mapper/${O_DEV}"_crypt"
 ${E} sync
 sleep 1
 f_pok 'crypt disk formatted with ext4'

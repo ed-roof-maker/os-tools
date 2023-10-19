@@ -1,0 +1,17 @@
+#!/usr/bin/bash
+O_FILE=$1
+if [ "${O_FILE}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error With Swap Pages 1 & 2' 'You must specify a valid pdf file.'
+   exit 1
+fi
+inf=${O_FILE}
+outf=${O_FILE[@]::-4}-Swapped.pdf
+notify-send -t 0 --icon=dialog-information 'QPDF - Swap Pages 1 & 2 - Starting' 'Generating new pdf file...\n'${outf}
+qpdf ${inf} --pages ${inf} 2,1,3-z -- ${outf}
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'QPDF - Error With Swap Pages 1 & 2' 'QPDF tool failed to generate a new pdf with pages 1 & 2 swapped. Maybe try using the qpdf command line...\n'${outf}
+   exit 1
+fi
+notify-send -t 0 --icon=emblem-default 'QPDF - Swap Pages 1 & 2 - Completed' 'QPDF generated a new pdf file here -\n'${outf}

@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+cwdf=$(realpath $0)
+cwdd=$(dirname ${cwdf})
+
+AT=${cwdd}
+. ${AT}/constants
+
+f_print_help () {
+   f_pt 'Open Optical Drive Tool'
+   printf '
+   Example usage -
+   '${YELLOW}$0${NORMAL}'
+
+'
+}
+if [ ! -f /usr/bin/sg_prevent ]
+then
+   echo 'sg3-utils not installed'
+   exit 1
+fi
+
+me=$(whoami)
+if [ ! "${me}" == 'admin_sec' ] && [ ! "${me}" == 'root' ]
+then
+   f_perr 'Only admin_sec or root can supply power to the optical drive.'
+   exit 1
+fi
+
+if [ "$1" == '--help' ]
+then
+   f_print_help
+   exit 0
+fi
+E='sudo -r sysadm_r's
+if [ "${me}" == 'root' ]; then E=''; fi
+
+CMD_RELOAD_CDDRIVE='sg_prevent --prevent=1 /dev/sr0 --verbose;modprobe -r sr_mod; sleep 2; modprobe -r cdrom; sleep 2; modprobe cdrom; sleep 2; modprobe sr_mod;sg_prevent --prevent=1 /dev/sr0 --verbose;sleep 2;'
+${E} bash -c "${CMD_RELOAD_CDDRIVE}"
+f_pdone 'Optical drive has power. It may be already ejected depending on model.'

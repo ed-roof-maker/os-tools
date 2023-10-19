@@ -1,0 +1,136 @@
+#!/usr/bin/bash
+cwdf=$(realpath $0)
+cwdd=$(dirname ${cwdf})
+
+AT=${cwdd}
+. ${AT}/constants
+
+f_print_help () {
+   f_pt 'Graphic File Tool'
+   printf '
+   Example usage -
+   '${YELLOW}$0${NORMAL}' --convert-to-png <file1> <file2>...n
+   '${YELLOW}$0${NORMAL}' --convert-to-jpg <file1> <file2>...n
+   '${YELLOW}$0${NORMAL}' --convert-to-gif <file1> <file2>...n
+   '${YELLOW}$0${NORMAL}' --convert-to-pdf <file1> <file2>...n
+
+   '${YELLOW}$0${NORMAL}' --reduce-to-120-colors <file1> <file2>...n
+   '${YELLOW}$0${NORMAL}' --reduce-to-24-colors <file1> <file2>...n
+   '${YELLOW}$0${NORMAL}' --reduce-to-12-colors <file1> <file2>...n
+   
+   '${YELLOW}$0${NORMAL}' --reduce-by-half <file1> <file2>...n
+   
+   '${YELLOW}$0${NORMAL}' --tile-watermark <file1> <file2>...n
+'
+}
+if [ "$1" == '--help' ]
+then
+   f_print_help
+   exit 0
+fi
+if [ ! -f /usr/bin/zenity ]
+then
+   echo 'Zenity not found'
+   exit 1
+fi
+if [ ! -f /usr/bin/composite ]
+then
+   echo 'Image Magick not installed'
+   exit 1
+fi
+O_ACTION=$1
+O_IN=$2
+O_OUT=$3
+ARGS=$@
+if [ "${O_IN}" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'Image Magick' 'You must specify a valid image file.'
+   exit 1
+fi
+notify-send -t 0 --icon=dialog-information 'Image Magick - Starting' 'Running image tool on...\n'${O_IN}
+CMD=''
+IFS='/' read -ra arr <<< ${O_IN}
+filen=${arr[-1]}
+file_dir=$(dirname ${O_IN})
+IFS='.' read -ra arr <<< ${filen}
+ext=${arr[-1]}
+ext_count=${#ext[@]}
+ext_remove=$(( ${exr_count} + 1 ))
+filen_noext=${filen[@]::-${ext_remove}}
+if [ "$O_ACTION" == '--get-info' ]
+then
+   msg=$(convert -identify ${O_IN} /dev/null)
+   notify-send -t 0 --icon=emblem-default 'Image Magick - Detailed Information' "$msg"
+   exit 0
+fi
+if [ "$O_ACTION" == '--convert-to-png' ]
+then
+   CMD='convert -strip -quality 65 -compress LZMA {O_IN} {O_IN}.png'
+fi
+if [ "$O_ACTION" == '--convert-to-jpg' ]
+then
+   CMD='convert -strip -quality 65 -compress LZMA {O_IN} {O_IN}.jpg'
+fi
+if [ "$O_ACTION" == '--convert-to-gif' ]
+then
+   CMD='convert -strip {O_IN} {O_IN}.gif'
+fi
+if [ "$O_ACTION" == '--convert-to-pdf' ]
+then
+   CMD='convert -strip -quality 65 -compress LZMA {O_IN} {O_IN}.pdf'
+fi
+if [ "$O_ACTION" == '--reduce-to-120-colors' ]
+then
+   CMD='convert -strip -colors 120 {O_IN} {O_IN}'
+fi
+if [ "$O_ACTION" == '--reduce-to-24-colors' ]
+then
+   CMD='convert -strip -colors 120 {O_IN} {O_IN}'
+fi
+if [ "$O_ACTION" == '--reduce-to-12-colors' ]
+then
+   CMD='convert -strip -colors 12 {O_IN} {O_IN}'
+fi
+if [ "$O_ACTION" == '--reduce-by-half' ]
+then
+   CMD='convert -strip -resize 50% {O_IN} {O_IN}'
+fi
+if [ "$O_ACTION" == '--tile-watermark' ]
+then
+   wm=$(zenity --file-selection --title='Image Magick - Select Watermark Tile')
+   for f in ${ARGS[@]}
+   do
+      if [ ! -f ${f} ]; then continue; fi
+      IFS='/' read -ra arr <<< ${f}
+      filen=${arr[-1]}
+      file_dir=$(dirname ${f})
+      IFS='.' read -ra arr <<< ${filen}
+      ext=${arr[-1]}
+      ext_count=${#ext[@]}
+      ext_remove=$(( ${ext_count} + 1 ))
+      filen_noext=${filen[@]::-${ext_remove}}
+      CMD='composite -strip -tile '${wm}' '${f}' '${file_dir}/${filen}_noext-Watermark.${ext}
+      ${CMD}
+   done
+   notify-send -t 0 --icon=emblem-default 'Image Magick - Watermark Applied to All Files' 'Tool completed'
+fi
+for f in ${ARGS[@]}
+do
+   if [ ! -f ${f} ]; then continue; fi
+   IFS='/' read -ra arr <<< ${f}
+   filen=${arr[-1]}
+   file_dir=$(dirname ${f})
+   IFS='.' read -ra arr <<< ${filen}
+   ext=${arr[-1]}
+   ext_count=${#ext[@]}
+   ext_remove=$(( ${ext_count} + 1 ))
+   filen_noext=${filen[@]::-${ext_remove}}
+   CMD_EXEC=$(echo "$CMD" | sed 's|{O_IN}|'${f}'|g')
+   ${CMD_EXEC}
+   if [ $? -ne 0 ]
+   then
+      notify-send -t 0 --icon=dialog-error 'Image Magick - Error' 'Image Magick tool failed on file...\n'${O_IN}
+      exit 1
+   fi
+done
+notify-send -t 0 --icon=emblem-default 'Image Magick - Completed' 'Tool completed on\n'${O_IN}

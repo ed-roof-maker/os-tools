@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+O_PATH=$1
+O_FILE=$2
+O_DAYS=$3
+has_plus=$(echo "${O_DAYS}" | grep '+' | wc -l)
+if [ ! ${has_plus} -eq 1 ]; then O_DAYS="${O_DAYS}"; fi
+old_count=$(find ${O_PATH} -mindepth 1 -maxdepth 1 -name ${O_FILE} -mtime "${O_DAYS}" | wc -l)
+if [ ${old_count} -ge 1 ]
+then
+   echo 'File '${O_FILE}' was modified more than '${O_DAYS}' days ago.'
+   exit 0
+else
+   echo 'File '${O_FILE}' was not modified more than '${O_DAYS}' days ago.'
+   exit 12     # Error trap systemd so that err 12 is a soft warning
+fi
+
