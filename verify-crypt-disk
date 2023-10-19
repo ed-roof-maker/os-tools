@@ -1,8 +1,9 @@
 #!/usr/bin/bash
 cwdf=$(realpath $0)
 cwdd=$(dirname ${cwdf})
+
 AT=${cwdd}
-. $AT/constants
+. ${AT}/constants
 
 f_print_help () {
    f_pt 'Verify Crypt Disk Tool'
@@ -15,7 +16,7 @@ f_print_help () {
 
 
 me=$(whoami)
-if [ ! "$me" == 'root' ]
+if [ ! "${me}" == 'root' ]
 then
    f_perr 'Only root can verify a crypt disk attached to this operating system.'
    exit 1
@@ -28,8 +29,8 @@ then
 fi
 
 O_DEV=$1
-d=/dev/$O_DEV
-if [ ! -b $d ] || [ "$O_DEV" == '' ]
+d=/dev/${O_DEV}
+if [ ! -b ${d} ] || [ "${O_DEV}" == '' ]
 then
    f_print_help
    f_perr 'You must specify a block device/partition path.'
@@ -38,22 +39,22 @@ then
    exit 1
 fi
 E='sudo -r sysadm_r'
-if [ "$me" == 'root' ]; then E=''; fi
+if [ "${me}" == 'root' ]; then E=''; fi
 which smartctl > /dev/null
 if [ $? -eq 1 ]
 then
    ${E} apt install smartmontools
 fi
 choice=''
-while [ ! "$choice" == 'C' ]
+while [ ! "${choice}" == 'C' ]
 do
-   $E smartctl --info $d
-   $E smartctl --health $d | grep "overall-health"
-   $E lsblk --output "NAME,SIZE,FSTYPE,MOUNTPOINT,LABEL" $d
-   $E udisksctl status | grep $O_DEV
+   ${E} smartctl --info ${d}
+   ${E} smartctl --health ${d} | grep "overall-health"
+   ${E} lsblk --output "NAME,SIZE,FSTYPE,MOUNTPOINT,LABEL" ${d}
+   ${E} udisksctl status | grep ${O_DEV}
    read -p '(C)ontinue, or (Q)uit: ' choice
-   choice=$(echo $choice | tr a-z A-Z)
-   if [ "$choice" == 'Q' ]; then exit 0; fi
+   choice=$(echo ${choice} | tr a-z A-Z)
+   if [ "${choice}" == 'Q' ]; then exit 0; fi
 done
-$E cryptsetup luksDump $d | less
+${E} cryptsetup luksDump ${d} | less
 
