@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+ISO_P=$1
+
+CMD_DVDISASTER_TEST='dvdisaster --test --image="{ISO_P}"'
+if [ ! -f $ISO_P ] || [ "$ISO_P" == '' ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Validate ISO' 'ValidateISO was called with an incorrect iso path - '$ISO_P
+   exit 1
+fi
+if [ ! -f /usr/bin/dvdisaster ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Validate ISO' 'This user session does not have access to dvdisaster.'
+   exit 1
+fi
+notify-send -t 0 --icon=dialog-information 'Validate ISO - Starting' 'ValidateISO is checking the image...\n'$ISO_P
+
+
+CMD_ECC=$(echo $CMD_DVDISASTER_TEST | sed 's|{ISO_P}|'$ISO_P'|g')
+bash -c "$CMD_ECC"
+if [ $? -ne 0 ]
+then
+   notify-send -t 0 --icon=dialog-error 'Error With Validate ISO' 'dvdisaster iso ecc test failed. Please run dvdisaster GUI/terminal to see detailed results - '$ISO_P
+   exit 1
+fi
+
+
+
+notify-send -t 0 --icon=emblem-default 'Validate ISO - Completed' 'ValidateISO found an ISO image with valid ECC correction data - '$ISO_P
+
+

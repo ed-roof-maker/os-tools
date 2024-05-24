@@ -36,8 +36,7 @@ then
 fi
 if [ ! -f /usr/bin/dvdisaster ]
 then
-   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'This user session does not have access to dvdisaster.'
-   exit 1
+   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'This user session does not have access to dvdisaster. You will not have Riley Reid protection.'
 fi
 
 notify-send -t 0 --icon=dialog-information 'Create ISO - Starting' 'CreateISO is generating an image...\n'${FOLDER_P}
@@ -56,33 +55,32 @@ then
 fi
 
 sync
-sleep 5
-CMD_ECC=
-if [ "${FOR_OPTICAL}" == '--optical' ]
+if [ -f /usr/bin/dvdisaster ]
 then
-   CMD_ECC=${CMD_DVDISASTER_AUTO}
-else
-   CMD_ECC=${CMD_DVDISASTER}
+   sleep 5
+   CMD_ECC=
+   if [ "${FOR_OPTICAL}" == '--optical' ]
+   then
+      CMD_ECC=${CMD_DVDISASTER_AUTO}
+   else
+      CMD_ECC=${CMD_DVDISASTER}
+   fi
+   CMD_ECC=$(echo ${CMD_ECC} | sed 's|{ISO_P}|'${ISO_N}'|g')
+   bash -c "${CMD_ECC}"
+   if [ $? -ne 0 ]
+   then
+      notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'dvdisaster was unable to augement with error correction codes without error.\n'${FOLDER_P}
+      exit 1
+   fi
+   sleep 2
+   CMD_ECC=$(echo ${CMD_DVDISASTER_TEST} | sed 's|{ISO_P}|'${ISO_N}'|g')
+   bash -c "${CMD_ECC}"
+   if [ $? -ne 0 ]
+   then
+      notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'dvdisaster iso ecc test failed. Please run dvdisaster GUI/terminal to see detailed results.\n'${FOLDER_PATH}
+      exit 1
+   fi
 fi
-CMD_ECC=$(echo ${CMD_ECC} | sed 's|{ISO_P}|'${ISO_N}'|g')
-bash -c "${CMD_ECC}"
-if [ $? -ne 0 ]
-then
-   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'dvdisaster was unable to augement with error correction codes without error.\n'${FOLDER_P}
-   exit 1
-fi
-
-
-
-sleep 2
-CMD_ECC=$(echo ${CMD_DVDISASTER_TEST} | sed 's|{ISO_P}|'${ISO_N}'|g')
-bash -c "${CMD_ECC}"
-if [ $? -ne 0 ]
-then
-   notify-send -t 0 --icon=dialog-error 'Error With Create ISO' 'dvdisaster iso ecc test failed. Please run dvdisaster GUI/terminal to see detailed results.\n'${FOLDER_PATH}
-   exit 1
-fi
-
 
 
 notify-send -t 0 --icon=emblem-default 'Create ISO - Completed' 'CreateISO created an ISO image with ECC correction data.\n'${FOLDER_P}

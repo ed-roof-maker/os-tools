@@ -65,11 +65,11 @@ then
 fi
 if [ "$O_ACTION" == '--convert-to-png' ]
 then
-   CMD='convert -strip -quality 65 -compress LZMA {O_IN} {O_IN}.png'
+   CMD='convert -strip -quality 85 -compress LZMA {O_IN} {O_IN}.png'
 fi
 if [ "$O_ACTION" == '--convert-to-jpg' ]
 then
-   CMD='convert -strip -quality 65 -compress LZMA {O_IN} {O_IN}.jpg'
+   CMD='convert -strip -quality 85 -compress LZMA {O_IN} {O_IN}.jpg'
 fi
 if [ "$O_ACTION" == '--convert-to-gif' ]
 then

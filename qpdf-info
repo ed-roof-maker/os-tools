@@ -12,6 +12,6 @@ then
    fi
    ENARGS=' --password='${pass}
 fi
-info=$(qpdf ${ENARGS} --check ${f})
-info="${info}"'\nTotal Pages: '$(qpdf ${ENARGS} --show-npages ${f})
-notify-send -t 0 --icon=dialog-information 'QPDF - Information About '${F} "${inf}o"
+info=$(qpdf ${ENARGS} --check ${F})
+info="${info}"'\nTotal Pages: '$(qpdf ${ENARGS} --show-npages ${F})
+notify-send -t 0 --icon=dialog-information 'QPDF - Information About '"${F}" "${info}"
